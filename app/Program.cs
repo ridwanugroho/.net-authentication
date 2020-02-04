@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using McMaster.Extensions.CommandLineUtils;
@@ -30,6 +31,8 @@ namespace ToDoList
             return rootApp.Execute(args);
         }
 
+        static Token token =  new Token();
+
         static async Task Postman(string url, string json)
         {
             HttpClient client = new HttpClient();
@@ -37,11 +40,15 @@ namespace ToDoList
             HttpResponseMessage res = await client.PostAsync(url, stringContent);
         }
 
-        static async Task<string> ReqObj(string url, HttpMethod methode, string data="")
+        static async Task<string> ReqObj(string url, HttpMethod methode, string data="", string token="")
         {
             HttpClientHandler handler = new HttpClientHandler();
             handler.ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; };
             HttpClient client = new HttpClient(handler);
+
+            if(token != "")
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
             var stringCOntent = new StringContent(data, UnicodeEncoding.UTF8, "application/json");
             HttpRequestMessage req = new HttpRequestMessage(methode, url);
             req.Content = stringCOntent;
@@ -65,7 +72,7 @@ namespace ToDoList
 
                     var jsonObj = JsonSerializer.Serialize(obj);
                     var tokenStr = await ReqObj(baseUrl+"login", HttpMethod.Post, jsonObj);
-                    Token token = JsonSerializer.Deserialize<Token>(tokenStr);
+                    token = JsonSerializer.Deserialize<Token>(tokenStr);
                     Console.WriteLine(token.token);
                     token.SaveToken();
                 });
@@ -98,7 +105,7 @@ namespace ToDoList
             {
                 cmd.OnExecuteAsync(async calcelationToken =>
                 {
-                    var res = await ReqObj(baseUrl, HttpMethod.Get);
+                    var res = await ReqObj(baseUrl+"activity", HttpMethod.Get, "", token.GetSavedToken());
                     List<Activity> activities = JsonSerializer.Deserialize<List<Activity>>(res);
                     foreach (var activity in activities)
                         Console.WriteLine($"{activity.id}. {activity.name}      {activity.getStatus()}");
