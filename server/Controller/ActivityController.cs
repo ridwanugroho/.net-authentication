@@ -81,17 +81,17 @@ namespace server.Controller
         [HttpPatch("edit")]
         public IActionResult EditActivity([FromBody] Activity act)
         {
-            // string[] editAttrName = {"Name", "Desc", "Status"};
+            string[] editAttrName = {"Name", "Desc", "Status"};
 
             var actToUpdate = appDbContex.Activity.Find(act.id);
-            actToUpdate = act;
+            // actToUpdate = act;
 
-            // print("attr");
-            // foreach (var item in editAttrName)
-            // {
-            //     var prop = typeof(Activity).GetProperty(item);
-            //     prop.SetValue(actToUpdate, prop.GetValue(act, null));
-            // }
+            print("attr");
+            foreach (var item in editAttrName)
+            {
+                var prop = typeof(Activity).GetProperty(item);
+                prop.SetValue(actToUpdate, prop.GetValue(act, null));
+            }
             
             actToUpdate.EditedAt = DateTime.Now;
             appDbContex.SaveChanges();

@@ -33,13 +33,6 @@ namespace ToDoList
 
         static Token token =  new Token();
 
-        static async Task Postman(string url, string json)
-        {
-            HttpClient client = new HttpClient();
-            var stringContent = new StringContent(json, UnicodeEncoding.UTF8, "application/json");
-            HttpResponseMessage res = await client.PostAsync(url, stringContent);
-        }
-
         static async Task<string> ReqObj(string url, HttpMethod methode, string data="", string token="")
         {
             HttpClientHandler handler = new HttpClientHandler();
@@ -93,9 +86,7 @@ namespace ToDoList
                     };
 
                     var jsonObj = JsonSerializer.Serialize(obj);
-                    var actJson = await ReqObj(baseUrl+"activity/create", HttpMethod.Post, jsonObj, token.GetSavedToken());
-                    // var act = JsonSerializer.Deserialize<Activity>(actJson);
-                    Console.WriteLine(actJson);
+                    await ReqObj(baseUrl+"activity/create", HttpMethod.Post, jsonObj, token.GetSavedToken());
                 });
             });
         }
@@ -106,7 +97,7 @@ namespace ToDoList
             {
                 cmd.OnExecuteAsync(async calcelationToken =>
                 {
-                    var res = await ReqObj(baseUrl+"activity", HttpMethod.Get, "", token.GetSavedToken());
+                    var res = await ReqObj(baseUrl+"activity", HttpMethod.Get, token:token.GetSavedToken());
                     List<Activity> activities = JsonSerializer.Deserialize<List<Activity>>(res);
                     foreach (var activity in activities)
                         Console.WriteLine($"{activity.id}. {activity.name}      {activity.getStatus()}");
@@ -116,17 +107,22 @@ namespace ToDoList
     
         static void Update(CommandLineApplication app)
         {
-            app.Command("update", cmd=>
+            app.Command("edit", cmd=>
             {
                 var cmdArgs = cmd.Argument("id_str_to_edit", " ", true);
                 cmd.OnExecuteAsync(async calcelationToken =>
                 {
-                    var str = "{"
-                            +   $"\"name\":\"{cmdArgs.Values[1]}\""
-                            + "}";
-                    // var toUpdate = JsonSerializer.Serialize(new Activity(){Name=cmdArgs.Values[1]});
+                    var obj = new 
+                    {
+                        id = Convert.ToInt32(cmdArgs.Values[0]),
+                        name = cmdArgs.Values[1]
+                    };
+
+                    var toUpdate = JsonSerializer.Serialize(obj);
+                    Console.WriteLine(toUpdate);
                     
-                    var res = await ReqObj(baseUrl+"update/"+cmdArgs.Values[0], HttpMethod.Patch, str);
+                    var res = await ReqObj(baseUrl+"activity/edit", HttpMethod.Patch, toUpdate, token.GetSavedToken());
+                    Console.WriteLine(res);
                 });
             });
         }
@@ -138,7 +134,8 @@ namespace ToDoList
                 var cmdArgs = cmd.Argument("id_to_delete", " ");
                 cmd.OnExecuteAsync(async calcelationToken =>
                 {
-                    var res = await ReqObj(baseUrl+cmdArgs.Values[0], HttpMethod.Delete);
+                    var res = await ReqObj(baseUrl+"activity/delete/"+cmdArgs.Values[0], HttpMethod.Get, token:token.GetSavedToken());
+                    Console.WriteLine(res);
                 });
             });
         }
@@ -155,8 +152,7 @@ namespace ToDoList
                 var cmdArgs = cmd.Argument("id_to_done", " ");
                 cmd.OnExecuteAsync(async calcelationToken =>
                 {
-                    var str = "{" + "\"Status\":true}";
-                    var res = await ReqObj(baseUrl+"status/"+cmdArgs.Value, HttpMethod.Patch, str);
+                    var res = await ReqObj(baseUrl+"activity/done/"+cmdArgs.Value, HttpMethod.Get, token:token.GetSavedToken());
                 });
             });
         }
@@ -168,8 +164,7 @@ namespace ToDoList
                 var cmdArgs = cmd.Argument("id_to_done", " ");
                 cmd.OnExecuteAsync(async calcelationToken =>
                 {
-                    var str = "{" + "\"Status\":false}"; 
-                    var res = await ReqObj(baseUrl+"status/"+cmdArgs.Values[0], HttpMethod.Patch, str);
+                    var res = await ReqObj(baseUrl+"activity/undone/"+cmdArgs.Value, HttpMethod.Get, token:token.GetSavedToken());
                 });
             });
         }
@@ -181,11 +176,7 @@ namespace ToDoList
                 cmd.OnExecuteAsync(async calcelationToken =>
                 {
                     var confirm = Prompt.GetYesNo("clear all activities?", false, ConsoleColor.Red);
-                    var res = await ReqObj(baseUrl, HttpMethod.Get);
-                    List<Activity> activities = JsonSerializer.Deserialize<List<Activity>>(res);
-                    var ids = from act in activities select act.id;
-                    foreach (var id in ids)
-                        await ReqObj(baseUrl+id, HttpMethod.Delete);
+                    var res = await ReqObj(baseUrl+"activity/clear", HttpMethod.Get, token:token.GetSavedToken());
                 });
             });
         }
