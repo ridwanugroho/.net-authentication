@@ -2,6 +2,7 @@ using System;
 using System.Text;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Collections.Generic;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
@@ -53,18 +54,71 @@ namespace server.Controller
         }
 
         [Authorize]
-        [HttpPost("done")]
-        public IActionResult SetDone([FromBody] Activity act)
+        [HttpGet("done/{id}")]
+        public IActionResult SetDone(int id)
         {
-            var actToUpdate = appDbContex.Activity.Find(act.id);
+            var actToUpdate = appDbContex.Activity.Find(id);
             actToUpdate.Status = true;
             actToUpdate.EditedAt = DateTime.Now;
             appDbContex.SaveChanges();
 
             return Ok(actToUpdate);
-
         }
 
+        [Authorize]
+        [HttpGet("undone/{id}")]
+        public IActionResult SetUnDone(int id)
+        {
+            var actToUpdate = appDbContex.Activity.Find(id);
+            actToUpdate.Status = false;
+            actToUpdate.EditedAt = DateTime.Now;
+            appDbContex.SaveChanges();
+
+            return Ok(actToUpdate);
+        }
+
+        [Authorize]
+        [HttpPost("edit")]
+        public IActionResult EditActivity([FromBody] Activity act)
+        {
+            string[] editAttrName = {"Name", "Desc", "Status"};
+
+            var actToUpdate = appDbContex.Activity.Find(act.id);
+
+            print("attr");
+            foreach (var item in editAttrName)
+            {
+                var prop = typeof(Activity).GetProperty(item);
+                prop.SetValue(actToUpdate, prop.GetValue(act, null));
+            }
+            
+            actToUpdate.EditedAt = DateTime.Now;
+            appDbContex.SaveChanges();
+
+            return Ok(actToUpdate);
+        }
+
+        [Authorize]
+        [HttpGet("delete/{id}")]
+        public IActionResult SetDelete(int id)
+        {
+            var actToDel = new Activity(){id=id};
+            appDbContex.Activity.Remove(actToDel);
+            appDbContex.SaveChanges();
+
+            return Ok("Delete OK!");
+        }
+
+        [Authorize]
+        [HttpGet("clear")]
+        public IActionResult ClearAct()
+        {
+            var range = from act in appDbContex.Activity select act;
+            appDbContex.Activity.RemoveRange(range);
+            appDbContex.SaveChanges();
+
+            return Ok("Activity Clear!");
+        }
 
 
         private User GetUser()
