@@ -8,7 +8,7 @@ using System.Net.Http.Headers;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using McMaster.Extensions.CommandLineUtils;
-using ACTOBJ;
+using app.Model;
 using TokenObj;
 
 namespace ToDoList
@@ -73,7 +73,6 @@ namespace ToDoList
                     var jsonObj = JsonSerializer.Serialize(obj);
                     var tokenStr = await ReqObj(baseUrl+"login", HttpMethod.Post, jsonObj);
                     token = JsonSerializer.Deserialize<Token>(tokenStr);
-                    Console.WriteLine(token.token);
                     token.SaveToken();
                 });
             });
@@ -83,18 +82,20 @@ namespace ToDoList
         {
             app.Command("add", cmd=>
             {
-                var nameArg = cmd.Argument("actName", "activity name").IsRequired();
+                var arg = cmd.Argument("actName", "activity name", true).IsRequired();
 
                 cmd.OnExecuteAsync(async calcelationToken =>
                 {
                     var obj = new Activity()
                     {
-                        name = nameArg.Value,
-                        status = false
+                        name = arg.Values[0],
+                        desc = arg.Values[1]
                     };
 
                     var jsonObj = JsonSerializer.Serialize(obj);
-                    await ReqObj(baseUrl, HttpMethod.Post, jsonObj);
+                    var actJson = await ReqObj(baseUrl+"activity/create", HttpMethod.Post, jsonObj, token.GetSavedToken());
+                    // var act = JsonSerializer.Deserialize<Activity>(actJson);
+                    Console.WriteLine(actJson);
                 });
             });
         }

@@ -1,8 +1,5 @@
-using System;
-using System.Collections.Generic;
 
-
-namespace ACTOBJ
+namespace app.Model
 {
     public class Activity
     {
@@ -18,5 +15,7 @@ namespace ACTOBJ
             else
                 return "un-done";
         }
+    
+        public User User{get; set;}
     }
 }
