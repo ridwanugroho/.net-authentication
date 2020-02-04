@@ -31,7 +31,9 @@ namespace server.Controller
         [HttpPost("register")]
         public IActionResult RegisterUser([FromBody] User user)
         {
-            if((from _user in appDbContex.Users where _user.Username == user.Username select user.Username).ToString() != "")
+            var existUser = from _user in appDbContex.Users select _user.Username;
+
+            if(existUser.Contains(user.Username))
             {
                 return Ok(new
                 {

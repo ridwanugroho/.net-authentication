@@ -19,6 +19,7 @@ namespace ToDoList
         static int Main(string[] args)
         {
             var rootApp = new CommandLineApplication(){Name="todo list"};
+            Register(rootApp);
             Login(rootApp);
             Add(rootApp);
             Lists(rootApp);
@@ -47,6 +48,27 @@ namespace ToDoList
             req.Content = stringCOntent;
             HttpResponseMessage response = await client.SendAsync(req);
             return await response.Content.ReadAsStringAsync();
+        }
+
+        static void Register(CommandLineApplication app)
+        {
+            app.Command("register", cmd=>
+            {
+                cmd.OnExecuteAsync(async cancelationToken =>
+                {
+                    var usern = Prompt.GetString("username: ");
+                    var pass = Prompt.GetString("password: ");
+                    var obj = new 
+                    {
+                        username = usern,
+                        password = pass
+                    };
+
+                    var jsonObj = JsonSerializer.Serialize(obj);
+                    var registerStatus = await ReqObj(baseUrl+"user/register", HttpMethod.Post, jsonObj);
+                    Console.WriteLine(registerStatus);
+                });
+            });
         }
 
         static void Login(CommandLineApplication app)
