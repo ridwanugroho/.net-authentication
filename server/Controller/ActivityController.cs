@@ -7,6 +7,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.IdentityModel.Tokens.Jwt;
+using Microsoft.EntityFrameworkCore;
 
 using Microsoft.Extensions.Configuration;
 
@@ -19,6 +20,7 @@ namespace server.Controller
     [Route("/activity")]
     public class ActivityController : ControllerBase
     {
+        private User user = null;
         public AppDbContex appDbContex{get; set;}
 
         public ActivityController(AppDbContex appDbContex)
@@ -28,27 +30,53 @@ namespace server.Controller
         
         [Authorize]
         [HttpGet]
-        public IActionResult GetAvtivity()
+        public IActionResult GetAvtivities()
         {
-            var token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJyaWR3YW4iLCJqdGkiOiI2YzhmOGU1Ni1kMjllLTRjYWYtOWU5OS03Y2YwM2JlYTAxYzEiLCJleHAiOjE1ODA4MDc1NzJ9.Duqk848uQJezphUoDzFdC7wUwNeeKIYtF4RJp5Kv_Pk";
-            var jwtSecrTokenHandler = new JwtSecurityTokenHandler();
-            var secrToken = jwtSecrTokenHandler.ReadToken(token) as JwtSecurityToken;
+            user = GetUser();
 
-            var username = secrToken?.Claims.First(claim => claim.Type == "sub").Value;
-            print(username);
-            var act = from usr in appDbContex.Users where usr.Username == username select usr;
-            return Ok(new{Konten = username});
-            // return Ok(act.First().Activity);
+            return Ok(user.Activity);
         }
 
         [Authorize]
         [HttpPost("create")]
         public IActionResult CreateAct([FromBody] Activity act)
         {
+            user = GetUser();
+
+            act.CreatedAt = DateTime.Now;
+            act.Status = false;
+            act.User = user;
             appDbContex.Activity.Add(act);
             appDbContex.SaveChanges();
 
             return Ok(act);
+        }
+
+        [Authorize]
+        [HttpPost("done")]
+        public IActionResult SetDone([FromBody] Activity act)
+        {
+            var actToUpdate = appDbContex.Activity.Find(act.id);
+            actToUpdate.Status = true;
+            actToUpdate.EditedAt = DateTime.Now;
+            appDbContex.SaveChanges();
+
+            return Ok(actToUpdate);
+
+        }
+
+
+
+        private User GetUser()
+        {
+            var token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwianRpIjoiYzg2N2FmYjgtYTE2Zi00MjA5LWJlOTEtNjZmMDZlMmZjZmU5IiwiZXhwIjoxNTgwODY3NDU1fQ.8JDWHjQkOugmfLC-7ZM7bUJFKwF-loYqliiEQzK284M";
+            var jwtSecrTokenHandler = new JwtSecurityTokenHandler();
+            var secrToken = jwtSecrTokenHandler.ReadToken(token) as JwtSecurityToken;
+
+            var userId = secrToken?.Claims.First(claim => claim.Type == "sub").Value;
+            var user= from usr in appDbContex.Users.Include(a=>a.Activity) where usr.Id == Convert.ToInt32(userId) select usr;
+            
+            return user.First();
         }
 
 

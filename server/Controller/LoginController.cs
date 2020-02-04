@@ -32,7 +32,7 @@ namespace server.Controller
         public IActionResult Welcome()
         {
             //read token from file
-            var token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJyaWR3YW4iLCJqdGkiOiI2YzhmOGU1Ni1kMjllLTRjYWYtOWU5OS03Y2YwM2JlYTAxYzEiLCJleHAiOjE1ODA4MDc1NzJ9.Duqk848uQJezphUoDzFdC7wUwNeeKIYtF4RJp5Kv_Pk";
+            var token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwianRpIjoiYzg2N2FmYjgtYTE2Zi00MjA5LWJlOTEtNjZmMDZlMmZjZmU5IiwiZXhwIjoxNTgwODY3NDU1fQ.8JDWHjQkOugmfLC-7ZM7bUJFKwF-loYqliiEQzK284M";
             var jwtSecrTokenHandler = new JwtSecurityTokenHandler();
             var secrToken = jwtSecrTokenHandler.ReadToken(token) as JwtSecurityToken;
 
@@ -76,7 +76,7 @@ namespace server.Controller
 
             var claims = new[]
             {
-                new Claim(JwtRegisteredClaimNames.Sub, user.Id),
+                new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 

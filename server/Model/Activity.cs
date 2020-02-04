@@ -10,5 +10,7 @@ namespace server.Model
         public bool Status{get; set;}
         public DateTime CreatedAt{get; set;}
         public DateTime EditedAt{get; set;}
+
+        public virtual User User{get; set;}
     }
 }
