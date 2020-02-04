@@ -31,8 +31,7 @@ namespace server.Controller
         [HttpGet("welcome")]
         public IActionResult Welcome()
         {
-            //read token from file
-            var token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwianRpIjoiYzg2N2FmYjgtYTE2Zi00MjA5LWJlOTEtNjZmMDZlMmZjZmU5IiwiZXhwIjoxNTgwODY3NDU1fQ.8JDWHjQkOugmfLC-7ZM7bUJFKwF-loYqliiEQzK284M";
+            var token = System.IO.File.ReadAllText("token.txt");
             var jwtSecrTokenHandler = new JwtSecurityTokenHandler();
             var secrToken = jwtSecrTokenHandler.ReadToken(token) as JwtSecurityToken;
 
@@ -53,9 +52,13 @@ namespace server.Controller
                 });
 
             var token = generateJwtToken(user);
+            var fToken = new StreamWriter("token.txt");
+            fToken.Write(token);
+            fToken.Close();
 
             return Ok(new{token});
         }
+
 
         public User AuthenticatedUser(User user_input)
         {

@@ -18,6 +18,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Authentication.JwtBearer;  
 
 using server.Model;
+using server.Log;
 
 
 namespace server
@@ -25,7 +26,20 @@ namespace server
     public class Startup
     {
         public IConfiguration Configuration;
-        
+        private static string[] logInfo = 
+        {
+            "login", 
+            "logout", 
+            "register",
+            "activity", 
+            "create",
+            "done",
+            "undone",
+            "edit",
+            "delete",
+            "clear"
+        };
+
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
@@ -73,16 +87,30 @@ namespace server
             {
                 app.UseDeveloperExceptionPage();
             }
-
-            app.UseRouting();
-
-            app.UseAuthentication();
-            app.UseAuthorization();
             
 
+            app.UseRouting();
+            app.UseAuthentication();
+            app.UseAuthorization();
+
+            LoggerHandlerMiddleware(app);
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+            });
+        }
+
+        private void LoggerHandlerMiddleware(IApplicationBuilder app)
+        {
+            app.Use(async(context,next)=>
+            {
+                string path = context.Request.Path.ToString();
+
+                var info = from i in logInfo where path.Contains(i) select i;
+
+                Logger.info(info.First().ToUpper(), context.Request.Path);
+
+                await next.Invoke();
             });
         }
     }

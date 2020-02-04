@@ -33,7 +33,7 @@ namespace server.Controller
         [HttpGet]
         public IActionResult GetAvtivities()
         {
-            user = GetUser();
+            user = getUser();
 
             return Ok(user.Activity);
         }
@@ -42,7 +42,7 @@ namespace server.Controller
         [HttpPost("create")]
         public IActionResult CreateAct([FromBody] Activity act)
         {
-            user = GetUser();
+            user = getUser();
 
             act.CreatedAt = DateTime.Now;
             act.Status = false;
@@ -78,19 +78,20 @@ namespace server.Controller
         }
 
         [Authorize]
-        [HttpPost("edit")]
+        [HttpPatch("edit")]
         public IActionResult EditActivity([FromBody] Activity act)
         {
-            string[] editAttrName = {"Name", "Desc", "Status"};
+            // string[] editAttrName = {"Name", "Desc", "Status"};
 
             var actToUpdate = appDbContex.Activity.Find(act.id);
+            actToUpdate = act;
 
-            print("attr");
-            foreach (var item in editAttrName)
-            {
-                var prop = typeof(Activity).GetProperty(item);
-                prop.SetValue(actToUpdate, prop.GetValue(act, null));
-            }
+            // print("attr");
+            // foreach (var item in editAttrName)
+            // {
+            //     var prop = typeof(Activity).GetProperty(item);
+            //     prop.SetValue(actToUpdate, prop.GetValue(act, null));
+            // }
             
             actToUpdate.EditedAt = DateTime.Now;
             appDbContex.SaveChanges();
@@ -113,17 +114,16 @@ namespace server.Controller
         [HttpGet("clear")]
         public IActionResult ClearAct()
         {
-            var range = from act in appDbContex.Activity select act;
-            appDbContex.Activity.RemoveRange(range);
+            var user = getUser();
+            appDbContex.Activity.RemoveRange(user.Activity);
             appDbContex.SaveChanges();
 
             return Ok("Activity Clear!");
         }
 
-
-        private User GetUser()
+        private User getUser()
         {
-            var token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwianRpIjoiYzg2N2FmYjgtYTE2Zi00MjA5LWJlOTEtNjZmMDZlMmZjZmU5IiwiZXhwIjoxNTgwODY3NDU1fQ.8JDWHjQkOugmfLC-7ZM7bUJFKwF-loYqliiEQzK284M";
+            var token = System.IO.File.ReadAllText("token.txt");
             var jwtSecrTokenHandler = new JwtSecurityTokenHandler();
             var secrToken = jwtSecrTokenHandler.ReadToken(token) as JwtSecurityToken;
 
@@ -132,11 +132,6 @@ namespace server.Controller
             
             return user.First();
         }
-
-
-
-
-
 
         private void print(string str)
         {
